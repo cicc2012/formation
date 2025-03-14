@@ -1,0 +1,102 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: A template as demenstration for proj 03, as an alternative solution to the process of demenstration for proj 02. This is for the backend, including lambda and API gateway endpoint.
+
+Parameters:
+  ExistingBucketName:
+    Type: String
+    Description: uco-cicc-media
+    Default: uco-cicc-media
+
+Resources:
+  
+  # IAM Role for Lambda function
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Action: 'sts:AssumeRole'
+            Principal:
+              Service: 'lambda.amazonaws.com'
+      Policies:
+        - PolicyName: LambdaPermissionsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 's3:GetObject'
+                Resource: !Sub 'arn:aws:s3:::${ExistingBucketName}/*'  # Reference the existing S3 bucket here
+              - Effect: 'Allow'
+                Action:
+                  - 'textract:DetectDocumentText'
+                Resource: '*'
+
+  # Lambda Function for processing images (Extract Text & Recognize Faces)
+  ImageProcessingLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ProcessImageFunction
+      Handler: "lambda_function.lambda_handler"
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref ExistingBucketName
+        S3Key: proj3/lambda_function.zip  # The Lambda code uploaded to this S3 bucket
+      Runtime: python3.13
+      Timeout: 30 # Set timeout as needed (max 15 minutes for Lambda)
+
+  # API Gateway to trigger the Lambda function
+  ApiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: ImageProcessingApi
+      Description: API to trigger Lambda function for image processing
+
+  # Resource and Method for API Gateway to invoke Lambda
+  ApiGatewayResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: 'process-image'
+
+  ApiGatewayMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      ResourceId: !Ref ApiGatewayResource
+      RestApiId: !Ref ApiGateway
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ImageProcessingLambda.Arn}/invocations
+      MethodResponses:
+        - StatusCode: 200
+
+
+  # Lambda Permission to allow API Gateway to invoke Lambda function
+  ApiGatewayLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref ImageProcessingLambda
+      Principal: 'apigateway.amazonaws.com'
+      
+  # Deployment of the API to a specific stage
+  ApiGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: ApiGatewayMethod  # Ensure the method is created before the deployment
+    Properties:
+      RestApiId: !Ref ApiGateway
+      StageName: dev  # You can change this to any stage name you want (e.g., dev, prod)
+
+
+Outputs:
+  APIUrl:
+    Description: "API Gateway URL"
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/dev/process-image"
+
