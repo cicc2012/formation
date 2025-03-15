@@ -66,6 +66,23 @@ To test this lambda function, we can use the test body like:
 
 Change the https link with your own S3 object URL.
 
+To deploy this template from command line, you can use:
+```bash
+aws cloudformation deploy \
+  --stack-name your-stack-name \
+  --template-url https://your-bucket-name.s3.your-region.amazonaws.com/path/to/your-template.yml \
+  --capabilities CAPABILITY_IAM
+```
+Replace the following placeholders:
+- your-stack-name: The name you want to give to your CloudFormation stack
+- your-bucket-name: The name of your S3 bucket 
+- path/to/your-template.yml: The path to your YAML template file within the S3 bucket
+- The --capabilities CAPABILITY_IAM flag is included in case your template creates IAM resources. If your template doesn't create IAM resources, you can omit this flag
+The URL can be constructed as follow:
+```text
+https://your-bucket-name.s3.your-region.amazonaws.com/path/to/your-object
+```
+
 ### Step 2: API Gateway
 
 
