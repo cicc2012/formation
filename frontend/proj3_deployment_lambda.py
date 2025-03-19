@@ -22,7 +22,7 @@ def lambda_handler(event, context):
 
     # Define the parameters for the Amplify deployment
     params = {
-        'appId': 'd3206ee02w4j67',  # Replace with your Amplify App ID
+        'appId': 'dla4mus2cn52m',  # Replace with your Amplify App ID
         'branchName': 'dev',            # Replace with your branch name
         'sourceUrl': f"s3://{bucket}/{key}"
     }

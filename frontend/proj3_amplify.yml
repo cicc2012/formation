@@ -35,6 +35,7 @@ Resources:
                   - 's3:GetObject'
                   - 's3:GetObjectAcl'
                   - 's3:PutObjectAcl'
+                  - 's3:PutObjectVersionAcl'
                 Resource: !Sub 'arn:aws:s3:::${SourceCodeBucket}/*'  
               - Effect: 'Allow'
                 Action:
