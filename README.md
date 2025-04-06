@@ -22,6 +22,9 @@ In this demo, we are going to experience how to use AWS CloudFormation templates
 - With CloudFormation, we can purely use code to implement our previous project.
 - After getting familiar with CloudFormation, we can reuse the templates to manipulate the AWS resources more flexibly and efficiently. 
 
+  ** Diagram **
+  ![The diagram of this demo](face_recognition_demo.png)
+
 ## Plans
 
 - [ ] Step 1: Create Lambda for Textract and API Gateway
